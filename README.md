@@ -1,25 +1,35 @@
-Based on YOLO impl in repo https://github.com/eriklindernoren/PyTorch-YOLOv3
-and (https://github.com/eriklindernoren/PyTorch-YOLOv3)
-Using onnx for converting pyTorch model to CoreML model (https://onnx.ai)
+# iOS + YOLOv3
 
-Convert to onnx
-```
-python3  -c "from models import *; convert_onnx('cfg/yolov3-tiny.cfg')"
-```
+Introducing online object detection on iOS with YOLOv3-416 and YOLOv3-tiny convolutional neural network architecture.
 
-Function convert_onnx:
-```
-import torch.onnx
-from torch.autograd import Variable
-def convert_onnx(cfg='cfg/yolov3-spp.cfg'):
-    model = Darknet(cfg)
-    input_shape = (3, 416, 416)
-    dummy_input = Variable(torch.randn(1, *input_shape))
-    torch.onnx.export(model, dummy_input, "yolov3-tiny.onnx")
+### Convertation from Darknet to CoreML
+
+First of all need to download YOLOv3 pretrained weights from [YOLO website](https://pjreddie.com/yolo/). Download both cfg and weights files.
+
+Then load this weights with to model using [Keras YOLOv3](https://github.com/qqwweee/keras-yolo3) implementation.
+
+After cloning above repo use this commend to load Darknet and save .h5:
+
+```bash
+python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
 ```
 
-```
-python3 detect.py --image_folder data/samples/ --weights_path weights/yolov3-tiny.weights --model_def config/yolov3-tiny.cfg
+And finally to transform from .h5 kreas model representation to CoreML format use code below:
+
+```python
+import coremltools
+
+coreml_model = coremltools.converters.keras.convert(
+    'yolo.h5',
+    input_names='image',
+    image_input_names='image',
+    input_name_shape_dict={'image': [None, 416, 416, 3]},
+    image_scale=1/255.)
+
+coreml_model.license = 'Public Domain'
+coreml_model.input_description['image'] = 'Input image'
+
+coreml_model.save('yolo.mlmodel')
 ```
 
 
