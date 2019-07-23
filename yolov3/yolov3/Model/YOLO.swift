@@ -22,6 +22,21 @@ enum YOLOType {
       return "YOLOv3-tiny"
     }
   }
+  
+  static func initFrom(name: String) -> YOLOType {
+    switch name {
+    case "YOLOv3-tiny":
+      return .v3_Tiny
+    case "YOLOv3-416":
+      return .v3_416
+    default:
+      return .v3_Tiny
+    }
+  }
+  
+  static func modelNames() -> [String] {
+    return ["YOLOv3-tiny", "YOLOv3-416"]
+  }
 }
 
 class YOLO: NSObject {
@@ -153,14 +168,14 @@ class YOLO: NSObject {
 
 // MARK: - YOLO Helpers
 
-private extension YOLO {
+extension YOLO {
   
   private func nonMaxSuppression(boxes: inout [Prediction], threshold: Float) {
     var i = 0
     while i < boxes.count {
       var j = i + 1
       while j < boxes.count {
-        let iou = IOU(a: boxes[i].rect, b: boxes[j].rect)
+        let iou = YOLO.IOU(a: boxes[i].rect, b: boxes[j].rect)
         if iou > threshold {
           if boxes[i].score > boxes[j].score {
             if boxes[i].classIndex == boxes[j].classIndex {
@@ -184,14 +199,14 @@ private extension YOLO {
     }
   }
   
-  private func IOU(a: CGRect, b: CGRect) -> Float {
+  static func IOU(a: CGRect, b: CGRect) -> Float {
     let areaA = a.width * a.height
     if areaA <= 0 { return 0 }
     let areaB = b.width * b.height
     if areaB <= 0 { return 0 }
     let intersection = a.intersection(b)
     let intersectionArea = intersection.width * intersection.height
-    return Float(intersectionArea / (areaA + areaA - intersectionArea))
+    return Float(intersectionArea / (areaA + areaB - intersectionArea))
   }
   
   private func argmax(_ x: [Float]) -> (Int, Float) {

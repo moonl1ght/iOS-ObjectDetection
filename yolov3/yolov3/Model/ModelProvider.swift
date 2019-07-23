@@ -32,6 +32,14 @@ class ModelProvider {
   var timeOfFirstFrameInSecond = CACurrentMediaTime()
   
   init(modelType type: YOLOType) {
+    loadModel(type: type)
+  }
+  
+  func reloadModel(type: YOLOType) {
+    loadModel(type: type)
+  }
+  
+  private func loadModel(type: YOLOType) {
     do {
       self.model = try YOLO(type: type)
     } catch {

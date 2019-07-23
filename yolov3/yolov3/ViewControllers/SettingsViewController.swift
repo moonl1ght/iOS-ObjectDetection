@@ -15,49 +15,80 @@ class SettingsViewController: UIViewController {
   @IBOutlet weak var modelPicker: UIPickerView!
   @IBOutlet weak var iouLabel: UILabel!
   @IBOutlet weak var confLabel: UILabel!
+  @IBOutlet weak var isSmoothed: UISwitch!
+  
+  var alert: UIAlertController?
   
   var pickerData: [String] = []
   
   weak var settings: Settings!
-  
 
   override func viewDidLoad() {
     super.viewDidLoad()
     settings = Settings.shared
-    iouSlider.minimumValue = 0
+    settings.delegate = self
+    iouSlider.minimumValue = 0.001
     iouSlider.maximumValue = 1
-    confSlider.minimumValue = 0
+    confSlider.minimumValue = 0.001
     confSlider.maximumValue = 1
     iouSlider.value = settings.iouThreshold
     iouLabel.text = String(format: "%.2f", iouSlider.value)
     confSlider.value = settings.confidenceThreshold
     confLabel.text = String(format: "%.2f", confSlider.value)
     
-    pickerData = ["YOLOv3-416", "YOLOv3-tiny"]
-
-        // Do any additional setup after loading the view.
+    pickerData = YOLOType.modelNames()
+    
+    modelPicker.selectRow(pickerData.firstIndex(of: settings.modelType.description())!,
+                          inComponent: 0, animated: true)
   }
   
   @IBAction func save() {
-    
+    settings.isSmoothed = isSmoothed.isOn
+    let isReloading = settings.save(modelType: YOLOType.initFrom(name:
+      pickerData[modelPicker.selectedRow(inComponent: 0)]))
+    if isReloading {
+      alert = UIAlertController(title: "Please wait", message: "Model is reloading",
+                                    preferredStyle: .alert)
+      self.present(alert!, animated: true, completion: nil)
+    }
   }
   
   @IBAction func restoreDefault() {
-    
+    settings.restore()
+    iouSlider.value = settings.iouThreshold
+    iouLabel.text = String(format: "%.2f", iouSlider.value)
+    confSlider.value = settings.confidenceThreshold
+    confLabel.text = String(format: "%.2f", confSlider.value)
+    isSmoothed.isOn = settings.isSmoothed
+    modelPicker.selectRow(pickerData.firstIndex(of: settings.modelType.description())!,
+                          inComponent: 0, animated: true)
   }
   
   @IBAction func iouChanged() {
-    print(iouSlider.value)
     iouLabel.text = String(format: "%.2f", iouSlider.value)
+    settings.iouThreshold = iouSlider.value
   }
   
   @IBAction func confChanged() {
     confLabel.text = String(format: "%.2f", confSlider.value)
+    settings.confidenceThreshold = confSlider.value
   }
 
 }
 
+extension SettingsViewController: SettingsDelegate {
+  
+  func reloadingFinished() {
+    guard let alert = self.alert else {
+      return
+    }
+    alert.dismiss(animated: true, completion: nil)
+  }
+  
+}
+
 extension SettingsViewController: UIPickerViewDelegate, UIPickerViewDataSource {
+
   func numberOfComponents(in pickerView: UIPickerView) -> Int {
     return 1
   }
@@ -70,8 +101,5 @@ extension SettingsViewController: UIPickerViewDelegate, UIPickerViewDataSource {
                   forComponent component: Int) -> String? {
     return pickerData[row]
   }
-  
-  
-  
   
 }

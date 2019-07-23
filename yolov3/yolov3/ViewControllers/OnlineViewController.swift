@@ -23,6 +23,7 @@ class OnlineViewController: UIViewController {
   var previewLayer: AVCaptureVideoPreviewLayer?
   weak var modelProvider: ModelProvider!
   var predictionLayer: PredictionLayer!
+  let smoother = Smoother()
   let semaphore = DispatchSemaphore(value: 1)
   
   var lastTimestamp = CMTime()
@@ -35,9 +36,6 @@ class OnlineViewController: UIViewController {
     predictionLayer = PredictionLayer()
     predictionLayer.update(imageViewFrame: previewView.frame,
                            imageSize: CGSize(width: 720, height: 1280))
-    let modelType = modelProvider.model.type!.description()
-    print(modelType)
-    modelLabel.text = "Model: " + modelType
     queue.async {
       self.semaphore.wait()
       let success = self.setUpCamera()
@@ -64,6 +62,9 @@ class OnlineViewController: UIViewController {
   
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
+    smoother.frameHistory = []
+    let modelType = modelProvider.model.type!.description()
+    modelLabel.text = "Model: " + modelType
     modelProvider.delegate = self
     self.startVideo()
   }
@@ -148,7 +149,12 @@ extension OnlineViewController: ModelProviderDelegate {
       return
     }
     predictionLayer.clear()
-    predictionLayer.addBoundingBoxes(predictions: predictions)
+    if Settings.shared.isSmoothed {
+      smoother.addToFrameHistory(predictions: predictions)
+      predictionLayer.addBoundingBoxes(predictions: smoother.getSmoothedBBoxes())
+    } else {
+      predictionLayer.addBoundingBoxes(predictions: predictions)
+    }
     predictionLayer.show()
     self.fpsLabel.text = "FPS: " + String(format: "%.2f", stat.fps)
     self.secPerFrameLabel.text = "SecPerFrame: " + String(format: "%.2f", stat.timeForFrame)

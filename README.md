@@ -6,7 +6,7 @@ Introducing online object detection on iOS with YOLOv3-416 and YOLOv3-tiny convo
 
 First of all need to download YOLOv3 pretrained weights from [YOLO website](https://pjreddie.com/yolo/). Download both cfg and weights files.
 
-Then load this weights with to model using [Keras YOLOv3](https://github.com/qqwweee/keras-yolo3) implementation.
+Then load Darknet weights to Keras model using [Keras-YOLOv3](https://github.com/qqwweee/keras-yolo3) implementation.
 
 After cloning above repo use this commend to load Darknet and save .h5:
 
@@ -14,7 +14,7 @@ After cloning above repo use this commend to load Darknet and save .h5:
 python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
 ```
 
-And finally to transform from .h5 kreas model representation to CoreML format use code below:
+And finally to transform from .h5 keras model representation to CoreML format use code below:
 
 ```python
 import coremltools
