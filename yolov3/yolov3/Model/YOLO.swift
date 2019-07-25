@@ -74,10 +74,10 @@ class YOLO: NSObject {
     self.type = type
     switch type {
     case .v3_Tiny:
-      url = Bundle.main.url(forResource: "yolo-tiny", withExtension:"mlmodelc")!
+      url = Bundle.main.url(forResource: "yolo-tiny", withExtension:"mlmodelc")
       self.anchors = tiny_anchors
     case .v3_416:
-      url = Bundle.main.url(forResource: "yolo", withExtension:"mlmodelc")!
+      url = Bundle.main.url(forResource: "yolo", withExtension:"mlmodelc")
       self.anchors = anchors_416
     }
     guard let modelURL = url else {
